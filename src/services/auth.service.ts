@@ -1,25 +1,43 @@
 import { generateToken } from '../utils/jwt';
 import bcrypt from 'bcryptjs';
-import User from '../database/models/user';
+import { UserRole } from '../database/models/user';
+import { findUserByEmail, createUser } from './user.service';
+import { AuthError } from '../utils/errors';
+import { JWTPayload } from '../types/jwt';
 
-export const registerUserService = async (name: string, email: string, password: string) => {
-  const existing = await User.findOne({ where: { email } });
-  if (existing) throw new Error('Email already in use');
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashedPassword });
+export const registerUserService = async (
+  name: string,
+  email: string,
+  password: string,
+  role: UserRole
+) => {
+  const existing = await findUserByEmail(email);
+  if (existing) throw new AuthError('Email already in use', 409);
 
-  const token = generateToken({ id: user.id, email: user.email });
-  return { user, token };
+  const user = await createUser(name, email, password, role);
+
+  const { password: _, ...safeUser } = user.toJSON();
+  const payload: JWTPayload = { id: user.id, email: user.email, role: user.role as UserRole };
+  const token = generateToken(payload);
+
+  return { user: safeUser, token };
 };
 
 export const loginUserService = async (email: string, password: string) => {
-  const user = await User.findOne({ where: { email } });
-  if (!user) throw new Error('Invalid email or password');
+  const user = await findUserByEmail(email);
+  if (!user) throw new AuthError('Invalid email or password', 401);
+  console.log(user);
 
   const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) throw new Error('Invalid email or password');
+  console.log(isMatch);
+  if (!isMatch) throw new AuthError('Invalid email or password', 401);
 
-  const token = generateToken({ id: user.id, email: user.email });
-  return { user, token };
+  const payload: JWTPayload = { id: user.id, email: user.email, role: user.role as UserRole };
+  const accessToken = generateToken(payload);
+  const refreshToken = generateToken(payload, '7d', JWT_REFRESH_SECRET);
+
+  const { password: _, ...safeUser } = user.toJSON();
+  return { user: safeUser, accessToken, refreshToken };
 };
