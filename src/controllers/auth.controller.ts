@@ -50,3 +50,23 @@ export const refreshToken = async (req: Request, res: Response) => {
     return res.sendStatus(403);
   }
 };
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies.refreshToken;
+    if (!token) return res.sendStatus(204); 
+
+    const payload = verifyToken(token, JWT_REFRESH_SECRET);
+    const user = await findUserById(payload.id);
+    if (!user) return res.sendStatus(403);
+
+    user.refreshToken = null;
+    await user.save();
+
+    res.clearCookie('refreshToken');
+    res.sendStatus(204);
+  } catch (err) {
+    logger.error(`Logout failed: ${err}`);
+    res.sendStatus(500);
+  }
+};

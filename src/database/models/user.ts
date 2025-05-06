@@ -21,6 +21,7 @@ class User extends Model {
   public name!: string;
   public email!: string;
   public password!: string;
+  public refreshToken!: string | null;
   public role!: string;
   static associate(models: any) {
     User.hasMany(models.Task, {
@@ -47,7 +48,11 @@ User.init({
     type: DataTypes.ENUM('admin', 'user'),
     defaultValue: 'user',
     allowNull: false
-  }  
+  },
+  refreshToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
 }, {
   sequelize,
   modelName: 'User',

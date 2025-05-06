@@ -28,16 +28,17 @@ export const registerUserService = async (
 export const loginUserService = async (email: string, password: string) => {
   const user = await findUserByEmail(email);
   if (!user) throw new AuthError('Invalid email or password', 401);
-  console.log(user);
 
   const isMatch = await bcrypt.compare(password, user.password);
-  console.log(isMatch);
   if (!isMatch) throw new AuthError('Invalid email or password', 401);
 
   const payload: JWTPayload = { id: user.id, email: user.email, role: user.role as UserRole };
   const accessToken = generateToken(payload);
   const refreshToken = generateToken(payload, '7d', JWT_REFRESH_SECRET);
 
-  const { password: _, ...safeUser } = user.toJSON();
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  const { password: _, refreshToken: __, ...safeUser } = user.toJSON();
   return { user: safeUser, accessToken, refreshToken };
 };
