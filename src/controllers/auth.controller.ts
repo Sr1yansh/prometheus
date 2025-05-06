@@ -3,6 +3,7 @@ import { registerUserService, loginUserService } from '../services/auth.service'
 import { generateToken, verifyToken } from '../utils/jwt';
 import { findUserById } from '../services/user.service';
 import { AuthError } from '../utils/errors';
+import { logger } from '../utils/logger';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string;
 
 export const register = async (req: Request, res: Response) => {
@@ -11,7 +12,7 @@ export const register = async (req: Request, res: Response) => {
     const { user, token } = await registerUserService(name, email, password, role);
     res.status(201).json({ message: 'User Registered', user, token });
   } catch (err: any) {
-    console.log(err.message);
+    logger.error(`Registration failed: ${err.message}`);
     if (err instanceof AuthError) {
       return res.status(err.statusCode).json({ error: err.message });
     }
@@ -45,6 +46,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     const accessToken = generateToken(payload);
     return res.json({ accessToken });
   } catch (err) {
+    logger.error(`Refresh token failed: ${err}`);
     return res.sendStatus(403);
   }
 };
