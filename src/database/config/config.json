@@ -3,14 +3,14 @@
       "username": "postgres",
       "password": "Newyork99@",
       "database": "task_manager_dev",
-      "host": "127.0.0.1",
+      "host": "postgres",
       "dialect": "postgres"
     },
     "test": {
       "username": "postgres",
       "password": "Newyork99@",
       "database": "task_manager_dev",
-      "host": "127.0.0.1",
+      "host": "postgres",
       "dialect": "postgres"
     },
     "production": {

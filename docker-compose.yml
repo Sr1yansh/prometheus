@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: task_manager_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Newyork99@
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DB_USER: postgres
+      DB_PASS: Newyork99@
+      DB_NAME: task_manager_dev
+      DB_HOST: postgres
+      PORT: 3000
+      JWT_SECRET: your_jwt_secret_key_here
+      JWT_REFRESH_SECRET: your_jwt_refresh_secret_key_here
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: >
+      sh -c "npx sequelize-cli db:migrate && npm run dev"
+
+volumes:
+  pgdata:
